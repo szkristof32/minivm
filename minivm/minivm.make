@@ -14,6 +14,19 @@ LDFLAGS=
 VM_SOURCES=$(wildcard $(SRC_DIR)/*.c)
 VM_OBJECTS=$(subst $(SRC_DIR),$(INT_DIR),$(VM_SOURCES:.c=.o))
 
+CLEAN=
+ALWAYS=
+
+ifeq ($(OS), Windows_NT)
+	CLEAN+=$(SILENT) if exist "$(INT_DIR)" (rmdir /S /Q "$(INT_DIR)") &
+	CLEAN+=$(SILENT) if exist $(TARGET) (del $(TARGET))
+	ALWAYS+=$(SILENT) if not exist "$(INT_DIR)" (mkdir "$(INT_DIR)")
+else
+	CLEAN+=$(SILENT) rm -rf $(INT_DIR)
+	CLEAN+=$(SILENT) rm $(TARGET)
+	ALWAYS+=$(SILENT) mkdir -p $(INT_DIR)
+endif
+
 .PHONY: always
 
 vm: $(TARGET) always
@@ -28,10 +41,9 @@ $(INT_DIR)/%.o: $(SRC_DIR)/%.c always
 
 clean:
 	$(SILENT) echo Cleaning minivm...
-	$(SILENT) rmdir /S /Q "$(INT_DIR)"
-	$(SILENT) del $(TARGET)
+	$(CLEAN)
 
 always:
-	$(SILENT) if not exist "$(INT_DIR)" (mkdir "$(INT_DIR)")
+	$(ALWAYS)
 
 -include $(VM_OBJECTS:.o=.d)
