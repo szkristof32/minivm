@@ -79,6 +79,7 @@ typedef struct node_generic_t
 {
 	token_type node_type;
 	uint64_t _padding;
+	node_t next_node;
 } node_generic_t;
 
 typedef struct parser_t
@@ -89,6 +90,7 @@ typedef struct parser_t
 
 	node_generic_t* nodes;
 	size_t node_count;
+	node_t start_node;
 } parser_t;
 
 void parser_parse(token_t* tokens, size_t token_count, parser_t* out_parser);

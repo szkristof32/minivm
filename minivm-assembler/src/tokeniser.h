@@ -37,3 +37,4 @@ typedef struct tokeniser_t
 } tokeniser_t;
 
 void tokeniser_tokenise(const char* source, tokeniser_t* out_tokeniser);
+void tokeniser_destroy(tokeniser_t* tokeniser);

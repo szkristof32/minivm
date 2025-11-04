@@ -6,6 +6,7 @@
 #include "common.h"
 #include "tokeniser.h"
 #include "parser.h"
+#include "code_generator.h"
 
 int main(int argc, char** argv)
 {
@@ -29,22 +30,22 @@ int main(int argc, char** argv)
 		filepath = argv[i];
 	}
 
-	FILE* file = fopen(filepath, "rb");
-	if (!file)
+	FILE* file_in = fopen(filepath, "rb");
+	if (!file_in)
 	{
 		error("Input file doesn't exists!");
 		return -1;
 	}
 
-	fseek(file, 0, SEEK_END);
-	size_t size = ftell(file);
-	fseek(file, 0, SEEK_SET);
+	fseek(file_in, 0, SEEK_END);
+	size_t size = ftell(file_in);
+	fseek(file_in, 0, SEEK_SET);
 
 	char* buffer = (char*)malloc((size + 1) * sizeof(char));
 	memset(buffer, 0, (size + 1) * sizeof(char));
-	
-	fread(buffer, sizeof(char), size, file);
-	fclose(file);
+
+	fread(buffer, sizeof(char), size, file_in);
+	fclose(file_in);
 
 	tokeniser_t tokeniser;
 	tokeniser_tokenise(buffer, &tokeniser);
@@ -52,5 +53,23 @@ int main(int argc, char** argv)
 	parser_t parser;
 	parser_parse(tokeniser.tokens, tokeniser.token_count, &parser);
 
+	code_generator_t generator;
+	code_generator_generate(parser.nodes, parser.node_count, parser.start_node, &generator);
+
+	FILE* file_out = fopen(output, "wb");
+	if (!file_in)
+	{
+		error("Cannot open output file!");
+		goto cleanup;
+	}
+
+	fwrite(generator.code, sizeof(uint8_t), generator.code_size, file_out);
+	fflush(file_out);
+	fclose(file_out);
+
+cleanup:
+	free(generator.code);
+	free(parser.nodes);
+	tokeniser_destroy(&tokeniser);
 	free(buffer);
 }

@@ -1,5 +1,7 @@
 #include "tokeniser.h"
 
+#include "debugmalloc.h"
+
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -78,6 +80,17 @@ if (strcmp(buffer, #keyword) == 0) \
 		}
 		_tokeniser_consume(out_tokeniser);
 	}
+}
+
+void tokeniser_destroy(tokeniser_t* tokeniser)
+{
+	for (uint32_t i = 0; i < tokeniser->token_count; i++)
+	{
+		if (tokeniser->tokens[i].type == token_type_integer)
+			free(tokeniser->tokens[i].data);
+	}
+
+	free(tokeniser->tokens);
 }
 
 char _tokeniser_peek(tokeniser_t* tokeniser, uint32_t offset)
