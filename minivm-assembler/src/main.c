@@ -1,12 +1,11 @@
-#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
 #include "tokeniser.h"
-
-#define error(...) fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");
+#include "parser.h"
 
 int main(int argc, char** argv)
 {
@@ -49,6 +48,9 @@ int main(int argc, char** argv)
 
 	tokeniser_t tokeniser;
 	tokeniser_tokenise(buffer, &tokeniser);
+
+	parser_t parser;
+	parser_parse(tokeniser.tokens, tokeniser.token_count, &parser);
 
 	free(buffer);
 }

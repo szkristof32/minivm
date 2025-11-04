@@ -18,19 +18,29 @@ void tokeniser_tokenise(const char* source, tokeniser_t* out_tokeniser)
 	{
 		if (isalpha(_tokeniser_peek(out_tokeniser, 0)))
 		{
-			char buffer[255] = { 0 };
+			char buffer[16] = { 0 };
 			size_t buf_ptr = 0;
 			while (_tokeniser_peek(out_tokeniser, 0) && isalpha(_tokeniser_peek(out_tokeniser, 0)))
 				buffer[buf_ptr++] = tolower(_tokeniser_consume(out_tokeniser));
 
-			token_t token = { 0 };
-			token.type = token_type_keyword;
-			token.data = (uint8_t*)malloc((buf_ptr + 1) * sizeof(char));
-			memset(token.data, 0, (buf_ptr + 1) * sizeof(char));
-			memcpy(token.data, buffer, buf_ptr * sizeof(char));
-
-			_tokeniser_push_token(out_tokeniser, &token);
-			continue;
+#define TOKEN_KEYWORD(keyword) \
+if (strcmp(buffer, #keyword) == 0) \
+{ \
+	token_t token = { 0 }; \
+	token.type = token_type_keyword_##keyword; \
+	_tokeniser_push_token(out_tokeniser, &token); \
+	continue; \
+}
+			TOKEN_KEYWORD(lit);
+			TOKEN_KEYWORD(get);
+			TOKEN_KEYWORD(set);
+			TOKEN_KEYWORD(put);
+			TOKEN_KEYWORD(sub);
+			TOKEN_KEYWORD(cgt);
+			TOKEN_KEYWORD(jnz);
+			TOKEN_KEYWORD(inp);
+			TOKEN_KEYWORD(out);
+			TOKEN_KEYWORD(end);
 		}
 		if (isdigit(_tokeniser_peek(out_tokeniser, 0)))
 		{
