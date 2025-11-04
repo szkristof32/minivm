@@ -1,0 +1,92 @@
+#include "tokeniser.h"
+
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+
+static char _tokeniser_peek(tokeniser_t* tokeniser, uint32_t offset);
+static char _tokeniser_consume(tokeniser_t* tokeniser);
+static void _tokeniser_push_token(tokeniser_t* tokeniser, token_t* token);
+
+void tokeniser_tokenise(const char* source, tokeniser_t* out_tokeniser)
+{
+	memset(out_tokeniser, 0, sizeof(tokeniser_t));
+	out_tokeniser->source = source;
+	out_tokeniser->source_size = strlen(out_tokeniser->source);
+
+	while (_tokeniser_peek(out_tokeniser, 0))
+	{
+		if (isalpha(_tokeniser_peek(out_tokeniser, 0)))
+		{
+			char buffer[255] = { 0 };
+			size_t buf_ptr = 0;
+			while (_tokeniser_peek(out_tokeniser, 0) && isalpha(_tokeniser_peek(out_tokeniser, 0)))
+				buffer[buf_ptr++] = tolower(_tokeniser_consume(out_tokeniser));
+
+			token_t token = { 0 };
+			token.type = token_type_keyword;
+			token.data = (uint8_t*)malloc((buf_ptr + 1) * sizeof(char));
+			memset(token.data, 0, (buf_ptr + 1) * sizeof(char));
+			memcpy(token.data, buffer, buf_ptr * sizeof(char));
+
+			_tokeniser_push_token(out_tokeniser, &token);
+			continue;
+		}
+		if (isdigit(_tokeniser_peek(out_tokeniser, 0)))
+		{
+			char buffer[255] = { 0 };
+			size_t buf_ptr = 0;
+			while (_tokeniser_peek(out_tokeniser, 0) && isdigit(_tokeniser_peek(out_tokeniser, 0)))
+				buffer[buf_ptr++] = _tokeniser_consume(out_tokeniser);
+
+			token_t token = { 0 };
+			token.type = token_type_integer;
+			token.data = (uint8_t*)malloc((buf_ptr + 1) * sizeof(char));
+			memset(token.data, 0, (buf_ptr + 1) * sizeof(char));
+			memcpy(token.data, buffer, buf_ptr * sizeof(char));
+
+			_tokeniser_push_token(out_tokeniser, &token);
+			continue;
+		}
+		if (_tokeniser_peek(out_tokeniser, 0) == '[')
+		{
+			token_t token = { 0 };
+			token.type = token_type_square_brackets_open;
+
+			_tokeniser_consume(out_tokeniser);
+			_tokeniser_push_token(out_tokeniser, &token);
+			continue;
+		}
+		if (_tokeniser_peek(out_tokeniser, 0) == ']')
+		{
+			token_t token = { 0 };
+			token.type = token_type_square_brackets_close;
+
+			_tokeniser_consume(out_tokeniser);
+			_tokeniser_push_token(out_tokeniser, &token);
+			continue;
+		}
+		_tokeniser_consume(out_tokeniser);
+	}
+}
+
+char _tokeniser_peek(tokeniser_t* tokeniser, uint32_t offset)
+{
+	if (tokeniser->pointer + offset < tokeniser->source_size)
+		return tokeniser->source[tokeniser->pointer + offset];
+	return '\0';
+}
+
+char _tokeniser_consume(tokeniser_t* tokeniser)
+{
+	if (tokeniser->pointer < tokeniser->source_size)
+		return tokeniser->source[tokeniser->pointer++];
+	return '\0';
+}
+
+void _tokeniser_push_token(tokeniser_t* tokeniser, token_t* token)
+{
+	tokeniser->tokens = realloc(tokeniser->tokens, (tokeniser->token_count + 1) * sizeof(token_t));
+	memcpy(&tokeniser->tokens[tokeniser->token_count], token, sizeof(token_t));
+	tokeniser->token_count++;
+}

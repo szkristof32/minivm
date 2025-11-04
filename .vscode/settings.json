@@ -1,0 +1,10 @@
+{
+	"files.associations": {
+		"*.make": "makefile",
+		"*.asm": "asm-intel-x86-generic",
+		"*.ek": "plaintext",
+		"stdlib.h": "c",
+		"stdio.h": "c",
+		"virtual_machine.h": "c"
+	}
+}
