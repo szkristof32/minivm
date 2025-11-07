@@ -17,10 +17,10 @@ VM_OBJECTS=$(subst $(SRC_DIR),$(INT_DIR),$(VM_SOURCES:.c=.o))
 CLEAN=
 ALWAYS=
 
-ifeq ($(OS), Windows_NT)
-	CLEAN+=$(SILENT) if exist "$(INT_DIR)" (rmdir /S /Q "$(INT_DIR)") &
-	CLEAN+=$(SILENT) if exist $(TARGET) (del $(TARGET))
-	ALWAYS+=$(SILENT) if not exist "$(INT_DIR)" (mkdir "$(INT_DIR)")
+ifeq ($(SHELL), cmd)
+	CLEAN+=$(SILENT) if exist "$(INT_DIR)" rmdir /S /Q "$(INT_DIR)" &
+	CLEAN+=$(SILENT) if exist $(TARGET) del $(TARGET)
+	ALWAYS+=if not exist "$(INT_DIR)" mkdir $(INT_DIR)
 else
 	CLEAN+=$(SILENT) rm -rf $(INT_DIR)
 	CLEAN+=$(SILENT) rm $(TARGET)
