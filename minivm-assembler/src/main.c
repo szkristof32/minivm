@@ -10,6 +10,8 @@
 
 int main(int argc, char** argv)
 {
+	int exit_code = 0;
+
 	const char* filepath = NULL;
 	const char* output = "out.mvm";
 
@@ -20,7 +22,8 @@ int main(int argc, char** argv)
 			if (i + 1 >= argc)
 			{
 				error("No filepath specified!");
-				return -1;
+				exit_code = -1;
+				goto exit;
 			}
 
 			output = argv[i + 1];
@@ -34,7 +37,8 @@ int main(int argc, char** argv)
 	if (!file_in)
 	{
 		error("Input file doesn't exists!");
-		return -1;
+		exit_code = -1;
+		goto exit;
 	}
 
 	fseek(file_in, 0, SEEK_END);
@@ -42,6 +46,12 @@ int main(int argc, char** argv)
 	fseek(file_in, 0, SEEK_SET);
 
 	char* buffer = (char*)malloc((size + 1) * sizeof(char));
+	if (!buffer)
+	{
+		error("Buffer allocation failed!");
+		exit_code = -2;
+		goto exit;
+	}
 	memset(buffer, 0, (size + 1) * sizeof(char));
 
 	fread(buffer, sizeof(char), size, file_in);
@@ -60,16 +70,23 @@ int main(int argc, char** argv)
 	if (!file_in)
 	{
 		error("Cannot open output file!");
-		goto cleanup;
+		exit_code = -3;
+		goto generator;
 	}
 
 	fwrite(generator.code, sizeof(uint8_t), generator.code_size, file_out);
 	fflush(file_out);
 	fclose(file_out);
 
-cleanup:
+generator:
 	free(generator.code);
+parser:
 	free(parser.nodes);
+tokeniser:
 	tokeniser_destroy(&tokeniser);
+source:
 	free(buffer);
+
+exit:
+	return exit_code;
 }
