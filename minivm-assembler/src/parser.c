@@ -21,6 +21,9 @@ static node_t _parser_parse_jnz(parser_t* parser);
 static node_t _parser_parse_inp(parser_t* parser);
 static node_t _parser_parse_out(parser_t* parser);
 static node_t _parser_parse_end(parser_t* parser);
+static node_t _parser_parse_db(parser_t* parser);
+static node_t _parser_parse_integer(parser_t* parser);
+static node_t _parser_parse_string_literal(parser_t* parser);
 
 void parser_parse(token_t* tokens, size_t token_count, parser_t* out_parser)
 {
@@ -46,6 +49,7 @@ void parser_parse(token_t* tokens, size_t token_count, parser_t* out_parser)
 			case token_type_keyword_inp: node = _parser_parse_inp(out_parser); break;
 			case token_type_keyword_out: node = _parser_parse_out(out_parser); break;
 			case token_type_keyword_end: node = _parser_parse_end(out_parser); break;
+			case token_type_keyword_db:	 node = _parser_parse_db(out_parser);  break;
 			default: continue;
 		}
 
@@ -223,4 +227,74 @@ node_t _parser_parse_end(parser_t* parser)
 	_parser_consume(parser);
 	node_end_t end_node = { 0 };
 	return _parser_push_node(parser, &end_node, node_type_end);
+}
+
+node_t _parser_parse_db(parser_t* parser)
+{
+	_parser_consume(parser);
+	if (!_parser_peek(parser, 0) ||
+		(_parser_peek(parser, 0)->type != token_type_integer &&
+		_parser_peek(parser, 0)->type != token_type_string_literal))
+		return -1;
+
+	token_t* token = _parser_peek(parser, 0);
+	node_t first_operand = -1;
+	node_t current_operand = -1;
+	size_t operand_count = 0;
+
+	switch (token->type)
+	{
+		case token_type_integer:		first_operand = _parser_parse_integer(parser); break;
+		case token_type_string_literal:	first_operand = _parser_parse_string_literal(parser); break;
+		default: break;
+	}
+
+	current_operand = first_operand;
+
+	operand_count++;
+
+	while (_parser_peek(parser, 0) && _parser_peek(parser, 0)->type == token_type_comma)
+	{
+		_parser_consume(parser);
+		if (_parser_peek(parser, 0) && (
+			_parser_peek(parser, 0)->type == token_type_integer ||
+			_parser_peek(parser, 0)->type == token_type_string_literal))
+		{
+			token = _parser_peek(parser, 0);
+
+			node_t operand = -1;
+			switch (token->type)
+			{
+				case token_type_integer:		operand = _parser_parse_integer(parser); break;
+				case token_type_string_literal:	operand = _parser_parse_string_literal(parser); break;
+				default: break;
+			}
+			operand_count++;
+
+			node_generic_t* last_operand = &parser->nodes[current_operand];
+			last_operand->next_node = operand;
+			current_operand = operand;
+		}
+	}
+
+	node_db_t db_node = { 0 };
+	db_node.operands = first_operand;
+	db_node.operand_count = operand_count;
+	return _parser_push_node(parser, &db_node, node_type_db);
+}
+
+node_t _parser_parse_integer(parser_t* parser)
+{
+	token_t* token = _parser_consume(parser);
+	node_integer_t integer_node = { 0 };
+	integer_node.value = token;
+	return _parser_push_node(parser, &integer_node, node_type_integer);
+}
+
+node_t _parser_parse_string_literal(parser_t* parser)
+{
+	token_t* token = _parser_consume(parser);
+	node_string_t string_node = { 0 };
+	string_node.value = token;
+	return _parser_push_node(parser, &string_node, node_type_string);
 }

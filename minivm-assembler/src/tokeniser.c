@@ -43,12 +43,22 @@ if (strcmp(buffer, #keyword) == 0) \
 			TOKEN_KEYWORD(inp);
 			TOKEN_KEYWORD(out);
 			TOKEN_KEYWORD(end);
+			TOKEN_KEYWORD(db);
 		}
 		if (isdigit(_tokeniser_peek(out_tokeniser, 0)))
 		{
-			char buffer[255] = { 0 };
-			size_t buf_ptr = 0;
-			while (_tokeniser_peek(out_tokeniser, 0) && isdigit(_tokeniser_peek(out_tokeniser, 0)))
+			uint8_t radix = 10;
+			if (_tokeniser_peek(out_tokeniser, 0) == '0' && _tokeniser_peek(out_tokeniser, 1) == 'x')
+			{
+				radix = 16;
+				_tokeniser_consume(out_tokeniser);
+				_tokeniser_consume(out_tokeniser);
+			}
+
+			char buffer[255] = { radix };
+			size_t buf_ptr = 1;
+			while (_tokeniser_peek(out_tokeniser, 0) && (isdigit(_tokeniser_peek(out_tokeniser, 0)) ||
+				tolower(_tokeniser_peek(out_tokeniser, 0)) >= 'a' && tolower(_tokeniser_peek(out_tokeniser, 0)) <= 'f'))
 				buffer[buf_ptr++] = _tokeniser_consume(out_tokeniser);
 
 			token_t token = { 0 };
@@ -75,6 +85,35 @@ if (strcmp(buffer, #keyword) == 0) \
 			token.type = token_type_square_brackets_close;
 
 			_tokeniser_consume(out_tokeniser);
+			_tokeniser_push_token(out_tokeniser, &token);
+			continue;
+		}
+		if (_tokeniser_peek(out_tokeniser, 0) == ',')
+		{
+			token_t token = { 0 };
+			token.type = token_type_comma;
+
+			_tokeniser_consume(out_tokeniser);
+			_tokeniser_push_token(out_tokeniser, &token);
+			continue;
+		}
+		if (_tokeniser_peek(out_tokeniser, 0) == '"')
+		{
+			char buffer[256] = { 0 };
+			size_t buf_ptr = 0;
+			_tokeniser_consume(out_tokeniser);
+
+			while (_tokeniser_peek(out_tokeniser, 0) && _tokeniser_peek(out_tokeniser, 0) != '"')
+				buffer[buf_ptr++] = _tokeniser_consume(out_tokeniser);
+
+			_tokeniser_consume(out_tokeniser);
+			
+			token_t token = { 0 };
+			token.type = token_type_string_literal;
+			token.data = (uint8_t*)malloc((buf_ptr + 1) * sizeof(char));
+			memset(token.data, 0, (buf_ptr + 1) * sizeof(char));
+			memcpy(token.data, buffer, buf_ptr * sizeof(char));
+
 			_tokeniser_push_token(out_tokeniser, &token);
 			continue;
 		}

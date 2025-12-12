@@ -1,0 +1,11 @@
+lit 0x22
+set 1
+get 1
+out
+lit 0xff
+sub 1
+set 1
+get 0
+jnz 0x16
+end
+db "Hello world!", 0x0a, 0x0

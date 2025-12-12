@@ -59,6 +59,17 @@ typedef struct node_integer_t
 	token_t* value;
 } node_integer_t;
 
+typedef struct node_string_t
+{
+	token_t* value;
+} node_string_t;
+
+typedef struct node_db_t
+{
+	node_t operands;
+	size_t operand_count;
+} node_db_t;
+
 typedef enum node_type
 {
 	node_type_none,
@@ -72,13 +83,15 @@ typedef enum node_type
 	node_type_inp,
 	node_type_out,
 	node_type_end,
+	node_type_db,
 	node_type_integer,
+	node_type_string,
 } node_type;
 
 typedef struct node_generic_t
 {
 	token_type node_type;
-	uint64_t _padding;
+	uint64_t _padding[2];
 	node_t next_node;
 } node_generic_t;
 

@@ -15,9 +15,12 @@ typedef enum token_type
 	token_type_keyword_inp,
 	token_type_keyword_out,
 	token_type_keyword_end,
+	token_type_keyword_db,
 	token_type_integer,
+	token_type_string_literal,
 	token_type_square_brackets_open,
-	token_type_square_brackets_close
+	token_type_square_brackets_close,
+	token_type_comma,
 } token_type;
 
 typedef struct token_t
